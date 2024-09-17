@@ -42,7 +42,7 @@ conn = psycopg2.connect(
 )
 ```
 ### Create a table in Postgres <sub><sup>(If not done before)</sup></sub> :
-##### Ensures that the magicbricks_listings table exists in the database before inserting any data. If the table does not exist, it is created with attributes given below.
+##### Ensure that the magicbricks_listings table exists in the database before inserting any data. If the table does not exist, create with attributes given below.
 ```python
 cur.execute("""
     CREATE TABLE IF NOT EXISTS magicbricks_listings (
@@ -61,4 +61,72 @@ cur.execute("""
         Project_Name VARCHAR(255)
     );
 """)
+```
+
+### The SQl insertion query for dynamic data insertion:
+##### This loop goes through the pages (as specified by num_pages). For each page, it Formats the base_url with the correct page_number and sends an HTTP GET request using the session to fetch the page.
+```python
+insert_query = """
+    INSERT INTO magicbricks_listings (Price, Landmarks, Min_Price, Max_Price, Carpet_Area, Price_Sqft, City, Unit, Bedroom, Title, Tenants_Preference, Project_Name)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+"""
+
+for page in range(1, num_pages + 1):
+    url = base_url.format(page_number=page)
+    
+    response = session.get(url)
+```
+
+### Process the API response:
+##### Once a successful response (status code 200) is received, convert the response to JSON and check if the key 'resultList' is present (which contains property data). Iterate through each property and extract key data fields (price, landmarks, etc.) and execute the SQL INSERT query for each property, by adding its data to the PostgreSQL table.
+```python
+    if response.status_code == 200:
+        data = response.json()  
+        
+        if 'resultList' in data:
+            for property in data['resultList']:
+                record = (
+                    property.get("price"),
+                    "; ".join(property.get("landmarkDetails", [])),  
+                    property.get("minPrice"),
+                    property.get("maxPrice"),
+                    property.get("caSqFt"),
+                    property.get("sqFtPrice"),
+                    property.get("ctName"),
+                    property.get("coverAreaUnitD"),
+                    property.get("bedroomD"),
+                    property.get("auto_desc"),
+                    property.get("tenantsPreference"),
+                    property.get("prjname"),
+                )
+                
+                cur.execute(insert_query, record)
+```
+
+### Handle the errors and page control:
+##### Print an error and breaks the loop, stopping further page requests. This helps avoid redundant requests when there’s a problem.
+```python
+ else:
+            print(f"No results found on page {page}")
+            break  
+    else:
+        print(f"Failed to retrieve data on page {page}, Status code: {response.status_code}")
+        break  
+```
+### Random delay in seconds:
+##### Introduce a random delay (between 2 to 5 seconds) after each page request to avoid overwhelming the server and being blocked for scraping too fast.
+```python
+ sleep_time = randint(2, 5)  
+ print(f"Sleeping for {sleep_time} seconds...")
+ time.sleep(sleep_time)
+```
+### Close the Database Connction
+##### After all data is scraped and inserted into the database, Ensure that changes are saved (commit()) and then closes the database connection and cursor properly.
+```python
+conn.commit()
+
+cur.close()
+conn.close()
+
+print("Data has been written to the PostgreSQL database.")
 ```
