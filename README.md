@@ -12,6 +12,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from requests import Session
 import psycopg2
 ```
+<br>
+<br>
 
 ### Create a Session:
 ##### This function creates an HTTP session with custom headers to mimic a regular browser, avoiding blocks from the server when scraping. It sets a User-Agent header to pretend the requests come from a real browser, avoiding detection as a bot.
@@ -23,12 +25,16 @@ def create_incognito_session():
     })
     return session
 ```
+<br>
+<br>
 
 ### Define the Base URL:
 ##### The base URL template is designed to paginate through the pages of property listings on MagicBricks. The ***{page_number}*** placeholder will be replaced with the actual page number during scraping.
 ```python
 base_url = "https://www.magicbricks.com/mbsrp/propertySearch.html?editSearch=Y&category=R&propertyType=10001,10017,10002,10003,10021,10022,10020&bedrooms=11700,11701,11702,11703&city=2481&page={page_number}&groupstart=90&offset=0&maxOffset=100&sortBy=premiumRecent&pType=10001,10017,10002,10003,10021,10022,10020&isNRI=N&showPrimePropsinFixedSlotsSEO=N&multiLang=en"
 ```
+<br>
+<br>
 
 ### Connect to the Postgres database:
 ##### Establish a connection to a local PostgreSQL database using your credentials. This will be used to store the scraped data.
@@ -41,6 +47,9 @@ conn = psycopg2.connect(
     password="XXXX"
 )
 ```
+<br>
+<br>
+
 ### Create a table in Postgres <sub><sup>(If not done before)</sup></sub> :
 ##### Ensure that the ***magicbricks_listings*** table exists in the database before inserting any data. If the table does not exist, create with attributes given below.
 ```python
@@ -62,6 +71,8 @@ cur.execute("""
     );
 """)
 ```
+<br>
+<br>
 
 ### The SQl insertion query for dynamic data insertion:
 ##### This loop goes through the pages ***as specified by num_pages***. For each page, it Formats the ***base_url*** with the correct ***page_number*** and sends an HTTP GET request using the session to fetch the page.
@@ -76,6 +87,8 @@ for page in range(1, num_pages + 1):
     
     response = session.get(url)
 ```
+<br>
+<br>
 
 ### Process the API response:
 ##### Once a successful response ***(status code 200)*** is received, Convert the response to JSON and check if the key ***resultList*** is present. Iterate through each property and extract attributes and execute the SQL INSERT query for each property, by adding its data to the PostgreSQL table.
@@ -102,6 +115,8 @@ for page in range(1, num_pages + 1):
                 
                 cur.execute(insert_query, record)
 ```
+<br>
+<br>
 
 ### Handle the errors and page control:
 ##### Print an error and breaks the loop, stopping further page requests. This helps avoid redundant requests when there’s a problem.
@@ -113,6 +128,9 @@ for page in range(1, num_pages + 1):
         print(f"Failed to retrieve data on page {page}, Status code: {response.status_code}")
         break  
 ```
+<br>
+<br>
+
 ### Random delay in seconds:
 ##### Introduce a random delay ***(between 2 to 5 seconds)*** after each page request to avoid overwhelming the server and being blocked for scraping too fast.
 ```python
@@ -120,6 +138,9 @@ for page in range(1, num_pages + 1):
  print(f"Sleeping for {sleep_time} seconds...")
  time.sleep(sleep_time)
 ```
+<br>
+<br>
+
 ### Close the Database Connction
 ##### After all data is scraped and inserted into the database, Ensure that changes are saved ***(commit())*** and then closes the database connection and cursor properly.
 ```python
