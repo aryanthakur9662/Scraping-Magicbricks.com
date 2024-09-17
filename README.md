@@ -25,7 +25,7 @@ def create_incognito_session():
 ```
 
 ### Define the Base URL:
-##### The base URL template is designed to paginate through the pages of property listings on MagicBricks. The {page_number} placeholder will be replaced with the actual page number during scraping.
+##### The base URL template is designed to paginate through the pages of property listings on MagicBricks. The ***{page_number}*** placeholder will be replaced with the actual page number during scraping.
 ```python
 base_url = "https://www.magicbricks.com/mbsrp/propertySearch.html?editSearch=Y&category=R&propertyType=10001,10017,10002,10003,10021,10022,10020&bedrooms=11700,11701,11702,11703&city=2481&page={page_number}&groupstart=90&offset=0&maxOffset=100&sortBy=premiumRecent&pType=10001,10017,10002,10003,10021,10022,10020&isNRI=N&showPrimePropsinFixedSlotsSEO=N&multiLang=en"
 ```
@@ -42,7 +42,7 @@ conn = psycopg2.connect(
 )
 ```
 ### Create a table in Postgres <sub><sup>(If not done before)</sup></sub> :
-##### Ensure that the magicbricks_listings table exists in the database before inserting any data. If the table does not exist, create with attributes given below.
+##### Ensure that the ***magicbricks_listings*** table exists in the database before inserting any data. If the table does not exist, create with attributes given below.
 ```python
 cur.execute("""
     CREATE TABLE IF NOT EXISTS magicbricks_listings (
@@ -64,7 +64,7 @@ cur.execute("""
 ```
 
 ### The SQl insertion query for dynamic data insertion:
-##### This loop goes through the pages (as specified by num_pages). For each page, it Formats the base_url with the correct page_number and sends an HTTP GET request using the session to fetch the page.
+##### This loop goes through the pages ***as specified by num_pages***. For each page, it Formats the ***base_url*** with the correct ***page_number*** and sends an HTTP GET request using the session to fetch the page.
 ```python
 insert_query = """
     INSERT INTO magicbricks_listings (Price, Landmarks, Min_Price, Max_Price, Carpet_Area, Price_Sqft, City, Unit, Bedroom, Title, Tenants_Preference, Project_Name)
@@ -78,7 +78,7 @@ for page in range(1, num_pages + 1):
 ```
 
 ### Process the API response:
-##### Once a successful response (status code 200) is received, convert the response to JSON and check if the key 'resultList' is present (which contains property data). Iterate through each property and extract key data fields (price, landmarks, etc.) and execute the SQL INSERT query for each property, by adding its data to the PostgreSQL table.
+##### Once a successful response ***(status code 200)*** is received, Convert the response to JSON and check if the key ***resultList*** is present. Iterate through each property and extract attributes and execute the SQL INSERT query for each property, by adding its data to the PostgreSQL table.
 ```python
     if response.status_code == 200:
         data = response.json()  
@@ -114,14 +114,14 @@ for page in range(1, num_pages + 1):
         break  
 ```
 ### Random delay in seconds:
-##### Introduce a random delay (between 2 to 5 seconds) after each page request to avoid overwhelming the server and being blocked for scraping too fast.
+##### Introduce a random delay ***(between 2 to 5 seconds)*** after each page request to avoid overwhelming the server and being blocked for scraping too fast.
 ```python
  sleep_time = randint(2, 5)  
  print(f"Sleeping for {sleep_time} seconds...")
  time.sleep(sleep_time)
 ```
 ### Close the Database Connction
-##### After all data is scraped and inserted into the database, Ensure that changes are saved (commit()) and then closes the database connection and cursor properly.
+##### After all data is scraped and inserted into the database, Ensure that changes are saved ***(commit())*** and then closes the database connection and cursor properly.
 ```python
 conn.commit()
 
